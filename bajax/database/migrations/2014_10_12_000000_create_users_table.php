@@ -25,7 +25,9 @@ class CreateUsersTable extends Migration
             $table->text('address');
             $table->string('website')->nullable();
 
-            $table->text('api_token')->nullable();
+            $table->string('api_token')->nullable();
+            $table->string('email_code')->nullable();
+            $table->string('forgot_password')->nullable();
 
             $table->timestamps();
         });

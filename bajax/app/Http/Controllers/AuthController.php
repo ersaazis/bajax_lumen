@@ -6,12 +6,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\User;
 use Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
     public function __construct(){
         $this->middleware('auth', ['only' => ['logout']]);
     }
+    // MAILER
     public function register(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:191',
@@ -30,6 +33,7 @@ class AuthController extends Controller
             ], 400);
         }
 
+        $emailVerifyCode=str_random(40);
         $data = $request->all();
         $register=User::create([
             'email' => $data['email'],
@@ -41,6 +45,8 @@ class AuthController extends Controller
             'aboutme' => $data['aboutme'],
             'address' => $data['address'],
             'website' => $data['website'],
+            
+            'email_code' => $emailVerifyCode,
         ]);
 
         if($register){
@@ -54,7 +60,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'messages' => 'Register Fail !',
-                'data' => ''
+                'data'=>NULL,
             ], 400);
         }
     }
@@ -76,31 +82,40 @@ class AuthController extends Controller
 
         $user = User::where('email', $email)->first();
         if(!empty($user) and Hash::check($password, $user->password)){
-            $apiToken=base64_encode(str_random(40));
-            $user->update([
-                'api_token' => $apiToken
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'messages' => 'Login Success !',
-                'data' => [
-                    'user' => $user,
+            if($user->email_code === NULL){
+                $apiToken=base64_encode($user->id.'@'.str_random(40));
+                $user->update([
                     'api_token' => $apiToken
-                ]
-            ], 201);
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'messages' => 'Login Success !',
+                    'data' => [
+                        'user' => $user,
+                        'api_token' => $apiToken
+                    ]
+                ], 200);
+            }
+            else {
+                return response()->json([
+                    'success' => false,
+                    'messages' => 'You must verify email first !',
+                    'data' => NULL
+                ], 400);
+            }
         }
         else {
             return response()->json([
                 'success' => false,
                 'messages' => 'Login Fail !',
-                'data' => ''
+                'data'=>NULL,
             ], 400);
         }
     }
     public function logout(Request $request){
         $api_token= $request->header('Authorization');
-        $user = User::where('api_token', $api_token)->first();;
+        $user = User::where('api_token', $api_token)->first();
         $user->update([
             'api_token' => ''
         ]);
@@ -109,5 +124,135 @@ class AuthController extends Controller
             'messages' => 'Logout Success !',
             'data' => ''
         ], 200);
+    }
+
+    public function token($token){
+        $user = User::where('api_token', $token)->first();
+        if($user)
+            return response()->json([
+                'success' => true,
+                'messages' => 'Token Valid !',
+                'data'=>NULL,
+            ], 200);
+        else
+            return response()->json([
+                'success' => false,
+                'messages' => 'Token Not Valid !',
+                'data'=>NULL,
+            ], 400);
+    }
+    //mailer
+    public function resendemail(Request $request){
+        $validator = Validator::make($request->all(), [
+            'email' => ['required','email',
+                Rule::exists('users')->where(function ($query) {
+                    $query->where('email_code', '!=', NULL);
+                }),
+            ],
+        ]);
+        if ($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'messages' => 'Can\'t Resend Email !',
+                'data' => NULL,
+            ], 400);
+        }
+        else {
+            $email_code=User::where('email',$request->input('email'))->first()->email_code;
+            return response()->json([
+                'success' => false,
+                'messages' => 'A new verification email has been sent !',
+                'data' => NULL,
+            ], 200);            
+        }
+    }
+
+    public function verifyemail(Request $request){
+        $validator = Validator::make($request->all(), [
+            'email_code' => 'required|exists:users',
+        ]);
+        if ($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'messages' => 'Can\'t Verify Email !',
+                'data' => $validator->errors(),
+            ], 400);
+        }
+        else {
+            $user=User::where('email_code',$request->input('email_code'))->update([
+                'email_code'=>NULL
+            ]);
+            return response()->json([
+                'success' => true,
+                'messages' => 'Email Successfully Verified !',
+                'data' => NULL,
+            ], 200);
+        }
+    }
+    //mailer
+    public function forgotpassword(Request $request){
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|exists:users',
+        ]);
+        if ($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'messages' => 'Can\'t Reset Password !',
+                'data' => $validator->errors(),
+            ], 400);
+        }
+        else {
+            $user=User::where('email',$request->input('email'));
+            $forgot_password=$user->first()->id.'@'.str_random(40);
+            $user->update(['forgot_password'=>$forgot_password]);
+            return response()->json([
+                'success' => true,
+                'messages' => 'Email verification has been sent !',
+                'data'=>NULL,
+            ], 200);
+        }
+    }
+    public function cekforgotpassword(Request $request){
+        $validator = Validator::make($request->all(), [
+            'forgot_password' => 'required|exists:users',
+        ]);
+        if ($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'messages' => 'Code Not Valid !',
+                'data' => $validator->errors(),
+            ], 400);
+        }
+        else
+            return response()->json([
+                'success' => true,
+                'messages' => 'Code Valid !',
+                'data'=>NULL,
+            ], 200);
+    }
+
+    public function resetpassword(Request $request){
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|confirmed',
+            'forgot_password' => 'required|exists:users',
+        ]);
+        if ($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'messages' => 'Can\'t Reset Password !',
+                'data' => $validator->errors(),
+            ], 400);
+        }
+        else {
+            $user=User::where('forgot_password',$request->input('forgot_password'))->update([
+                'password'=>Hash::make($request->input('password')),
+                'forgot_password'=>NULL
+            ]);
+            return response()->json([
+                'success' => false,
+                'messages' => 'Reset Password Success !',
+                'data'=>NULL,
+            ], 400);
+        }
     }
 }
