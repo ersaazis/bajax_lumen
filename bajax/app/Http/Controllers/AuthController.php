@@ -14,7 +14,6 @@ class AuthController extends Controller
     public function __construct(){
         $this->middleware('auth', ['only' => ['logout']]);
     }
-    // MAILER
     public function register(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:191',
@@ -50,6 +49,8 @@ class AuthController extends Controller
         ]);
 
         if($register){
+            $url=config('app.client_server.verifyemail').$emailVerifyCode;
+            Mail::send(new \App\Mail\SendEMailVerification($register,$url));
             return response()->json([
                 'success' => true,
                 'messages' => 'Register Success !',
@@ -141,7 +142,6 @@ class AuthController extends Controller
                 'data'=>NULL,
             ], 400);
     }
-    //mailer
     public function resendemail(Request $request){
         $validator = Validator::make($request->all(), [
             'email' => ['required','email',
@@ -158,9 +158,11 @@ class AuthController extends Controller
             ], 400);
         }
         else {
-            $email_code=User::where('email',$request->input('email'))->first()->email_code;
+            $user=User::where('email',$request->input('email'))->first();
+            $url=config('app.client_server.verifyemail').$user->email_code;
+            Mail::send(new \App\Mail\SendEMailVerification($user,$url));
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'messages' => 'A new verification email has been sent !',
                 'data' => NULL,
             ], 200);            
@@ -189,7 +191,6 @@ class AuthController extends Controller
             ], 200);
         }
     }
-    //mailer
     public function forgotpassword(Request $request){
         $validator = Validator::make($request->all(), [
             'email' => 'required|exists:users',
@@ -202,9 +203,12 @@ class AuthController extends Controller
             ], 400);
         }
         else {
+            $forgot_password=str_random(40);
             $user=User::where('email',$request->input('email'));
-            $forgot_password=$user->first()->id.'@'.str_random(40);
             $user->update(['forgot_password'=>$forgot_password]);
+
+            $url=config('app.client_server.resetpassword').$forgot_password;
+            Mail::send(new \App\Mail\SendResetPasswordCode($user->first(),$url));
             return response()->json([
                 'success' => true,
                 'messages' => 'Email verification has been sent !',
