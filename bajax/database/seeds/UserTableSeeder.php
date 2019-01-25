@@ -40,5 +40,6 @@ class UserTableSeeder extends Seeder
             'address' => "WAKANDA",
             'website' => "http://ersaazis.github.io",
 	     	]);
+        $user->assignRole([1]);
     }
 }

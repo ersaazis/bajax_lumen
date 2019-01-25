@@ -1,8 +1,5 @@
 <?php
 
-use Laravel\Lumen\Testing\DatabaseMigrations;
-use Laravel\Lumen\Testing\DatabaseTransactions;
-
 class ExampleTest extends TestCase
 {
     /**
@@ -10,6 +7,15 @@ class ExampleTest extends TestCase
      *
      * @return void
      */
+    public function setUp()
+    {
+        // first include all the normal setUp operations
+        parent::setUp();
+
+        // now re-register all the roles and permissions
+        $this->app->make(\Spatie\Permission\PermissionRegistrar::class)->registerPermissions();
+    }
+
     public function testExample()
     {
         $this->get('/');
