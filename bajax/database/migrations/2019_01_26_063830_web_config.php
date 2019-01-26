@@ -28,6 +28,6 @@ class WebConfig extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('WebConfig');
     }
 }

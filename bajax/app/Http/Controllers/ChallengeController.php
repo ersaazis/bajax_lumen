@@ -8,6 +8,7 @@ use App\Challenge;
 use App\ChallengeLog;
 use App\WebConfig;
 use Auth;
+use Validator;
 
 class ChallengeController extends Controller
 {
@@ -28,6 +29,11 @@ class ChallengeController extends Controller
         $listChallenges = Challenge::orderBy('id','ASC')->get();
         $challenges=array();
         foreach ($listChallenges as $challenge) {
+            $challenge['file1']=($challenge['file1']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file1']:NULL;
+            $challenge['file2']=($challenge['file2']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file2']:NULL;
+            $challenge['file3']=($challenge['file3']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file3']:NULL;
+            $challenge['file4']=($challenge['file4']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file4']:NULL;
+
             $challengeLog=ChallengeLog::where(['user_id' => Auth::id(),'challenge_id' => $challenge->id])->count();
             if($challengeLog)
                 $challenges[]=array("data"=>$challenge,"finished"=>true);
@@ -122,40 +128,6 @@ class ChallengeController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        $challenge = Challenge::find($id);
-        $challengeLog=ChallengeLog::where(['user_id' => Auth::id(),'challenge_id' => $id])->count();
-        $urlFile=array();
-        $urlFile[1]=Storage::disk('challenges')->url($id.'/'.$challenge->file1);
-        $urlFile[2]=Storage::disk('challenges')->url($id.'/'.$challenge->file2);
-        $urlFile[3]=Storage::disk('challenges')->url($id.'/'.$challenge->file3);
-        $urlFile[4]=Storage::disk('challenges')->url($id.'/'.$challenge->file4);
-
-        if($challenge)
-            return response()->json([
-                'success' => true,
-                'messages' => 'Show Challenge!',
-                'data' => [
-                    'challenge' => $challenge,
-                    'urlFile' => $urlFile
-                    'challengeLog' => $challengeLog
-                ]
-            ], 200);
-        else
-            return response()->json([
-                'success' => false,
-                'messages' => 'No Challenge!',
-                'data' => NULL
-            ], 400);
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -207,7 +179,7 @@ class ChallengeController extends Controller
             $file4=$request->file('file4')->getClientOriginalName();
             $input['file4']=$file4;
         }
-        WebConfig::findByName('update_point')->update(['value'=>'1']);
+        WebConfig::where('name','update_point')->update(['value'=>'1']);
         $idChallenge = Challenge::find($id)->update($input);
         if($idChallenge){
             if($request->file('file1')){
@@ -246,13 +218,22 @@ class ChallengeController extends Controller
      */
     public function destroy($id)
     {
-        $challenge = Challenge::find($id)->delete();
-        Storage::disk('challenges')->deleteDirectory($id);
-        return response()->json([
-            'success' => true,
-            'messages' => 'Delete Challenge Success !',
-            'data'=>NULL,
-        ], 200);
+        $challenge = Challenge::find($id);
+       if($challenge){
+            $challenge->delete();
+            Storage::disk('challenges')->deleteDirectory($id);
+            return response()->json([
+                'success' => true,
+                'messages' => 'Delete Challenge Success !',
+                'data'=>NULL,
+            ], 200);
+        }
+        else
+            return response()->json([
+                'success' => false,
+                'messages' => 'Challenge Not Found !',
+                'data'=>NULL,
+            ], 400);
     }
     public function destroyFile($id,$file)
     {

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Auth;
 use App\User;
-use Hash;
+use Illuminate\Support\Facades\Hash;
+use Validator;
+
 class AccountController extends Controller
 {
     /**
@@ -20,7 +22,7 @@ class AccountController extends Controller
         $oldUser=Auth::user();
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:191',
-            'email' => 'required|email|max:191|unique:users',
+            'email' => 'required|email|max:191|unique:users,email,'.Auth::id(),
             'password' => 'required|min:8',
             'birthplace' => 'required|max:191', 
             'dateofbirth' => 'required|date_format:Y-m-d', 

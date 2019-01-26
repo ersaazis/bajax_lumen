@@ -10,8 +10,8 @@ use App\User;
 use App\ChallengeLog;
 use Spatie\Permission\Models\Role;
 use DB;
-use Hash;
-
+use Illuminate\Support\Facades\Hash;
+use Validator;
 
 class UserController extends Controller
 {
@@ -86,7 +86,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'messages' => 'Add User Success !',
-                'data' => $register
+                'data' => $user
             ], 201);
         }
         else {
@@ -108,27 +108,27 @@ class UserController extends Controller
     public function show($id)
     {
         $user = User::find($id);
-        if($user)
+        if($user){
             $challenges = ChallengeLog::where('user_id',$id)->get();
 
-            $rank = User::where([
-                'point',$user->point,
-                'last_submit_flag','<=',$user->last_submit_flag,
+            $rank= User::where([
+                ['point',$user->point??0],
+                ['last_submit_flag','<=',$user->last_submit_flag??0],
             ])->orderBy('point','DESC')->orderBy('last_submit_flag','ASC')->count();
 
-            $rank+ = User::where([
-                'point','>',$user->point,
-            ])->orderBy('point','DESC')->orderBy('last_submit_flag','ASC')->count();
+            $rank+= User::where('point','>',$user->point??0)->orderBy('point','DESC')->orderBy('last_submit_flag','ASC')->count();
 
             return response()->json([
                 'success' => true,
                 'messages' => 'Show User !',
                 'data' => [
                     'user' => $user,
-                    'challenges' => $challenges
+                    'role' => User::find($user->id)->getRoleNames(),
+                    'challenges' => $challenges,
                     'rank' => $rank
                 ]
             ], 200);
+        }
         else
             return response()->json([
                 'success' => false,
@@ -149,7 +149,7 @@ class UserController extends Controller
         $oldUser=User::find($id);
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:191',
-            'email' => 'required|email|max:191|unique:users',
+            'email' => 'required|email|max:191|unique:users,email,'.Auth::id(),
             'password' => 'required|min:8',
             'birthplace' => 'required|max:191', 
             'dateofbirth' => 'required|date_format:Y-m-d', 
@@ -218,17 +218,26 @@ class UserController extends Controller
     public function destroy($id)
     {
         if($id != 1){
-            User::find($id)->delete();
-             return response()->json([
-                'success' => true,
-                'messages' => 'Delete User Success !',
-                'data'=>NULL,
-            ], 200);
+            $user=User::find($id);
+            if($user){
+                $user->delete();
+                return response()->json([
+                    'success' => true,
+                    'messages' => 'Delete User Success !',
+                    'data'=>NULL,
+                ], 200);
+            }
+            else
+                return response()->json([
+                    'success' => false,
+                    'messages' => 'User Not Found !',
+                    'data'=>NULL,
+                ], 400);
         }
         else
             return response()->json([
                 'success' => false,
-                'messages' => 'Can\'t User Fail !',
+                'messages' => 'Can\'t Delete User !',
                 'data'=>NULL,
             ], 400);
     }

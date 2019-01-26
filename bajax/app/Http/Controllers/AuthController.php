@@ -6,15 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\User;
 use Validator;
+use App\ChallengeLog;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    public function __construct(){
-        $this->middleware('auth', ['only' => ['logout']]);
-        $this->middleware('throttle:5,1');
-    }
     public function register(Request $request){
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:191',
@@ -52,6 +49,7 @@ class AuthController extends Controller
         if($register){
             $url=config('app.client_server.verifyemail').$emailVerifyCode;
             Mail::send(new \App\Mail\SendEMailVerification($register,$url));
+            $register->assignRole([3]);
             return response()->json([
                 'success' => true,
                 'messages' => 'Register Success !',
@@ -130,12 +128,26 @@ class AuthController extends Controller
 
     public function token($token){
         $user = User::where('api_token', $token)->first();
-        if($user)
+        if($user){
+            $challenges = ChallengeLog::where('user_id',$user->id)->get();
+
+            $rank= User::where([
+                ['point',$user->point??0],
+                ['last_submit_flag','<=',$user->last_submit_flag??0],
+            ])->orderBy('point','DESC')->orderBy('last_submit_flag','ASC')->count();
+
+            $rank+= User::where('point','>',$user->point??0)->orderBy('point','DESC')->orderBy('last_submit_flag','ASC')->count();
+
             return response()->json([
                 'success' => true,
                 'messages' => 'Token Valid !',
-                'data'=>NULL,
+                'data' => [
+                    'user' => $user,
+                    'challenges' => $challenges,
+                    'rank' => $rank
+                ]
             ], 200);
+        }
         else
             return response()->json([
                 'success' => false,

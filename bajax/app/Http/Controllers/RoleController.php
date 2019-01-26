@@ -181,17 +181,25 @@ class RoleController extends Controller
     public function destroy($id)
     {
         if($id and $id != 2 and $id != 3 and $id != 4){
-            DB::table("roles")->where('id',$id)->delete();
-            return response()->json([
-                'success' => true,
-                'messages' => 'Delete Role Success !',
-                'data'=>NULL,
-            ], 200);
+            $role=DB::table("roles")->where('id',$id);
+            if($role)
+                $role->delete();
+                return response()->json([
+                    'success' => true,
+                    'messages' => 'Delete Role Success !',
+                    'data'=>NULL,
+                ], 200);
+            else
+                return response()->json([
+                    'success' => false,
+                    'messages' => 'Can\'t Delete Role !',
+                    'data'=>NULL,
+                ], 400);
         }
         else
             return response()->json([
                 'success' => false,
-                'messages' => 'Can\'t Delete Role !',
+                'messages' => 'Role Not Found !',
                 'data'=>NULL,
             ], 400);
     }

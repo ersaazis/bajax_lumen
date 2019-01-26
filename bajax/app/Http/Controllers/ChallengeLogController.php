@@ -20,10 +20,12 @@ class ChallengeLogController extends Controller
 	    			'user_id' => Auth::id(),
 	    			'challenge_id' => $id,
 	    		]);
+                $point=Auth::user()->point+$challenge->point;
+                User::find(Auth::id())->update('point' => $point);
 	    		User::find(Auth::id())->update('last_submit_flag' => $succsessChal->created_at);
                 return response()->json([
                     'success' => true,
-                    'messages' => 'Success, +'.$challenge->point.' Point',
+                    'messages' => 'Success, +'.$challenge->point.' Point, Your Point '.$point,
                     'data'=>NULL,
                 ], 200);
 	    	}

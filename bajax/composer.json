@@ -10,7 +10,8 @@
         "vlucas/phpdotenv": "~2.2",
         "illuminate/mail": "v5.5.*",
         "spatie/laravel-permission": "^2.29",
-        "illuminate/routing": "v5.5.*"
+        "illuminate/routing": "v5.5.*",
+        "league/flysystem": "^1.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
