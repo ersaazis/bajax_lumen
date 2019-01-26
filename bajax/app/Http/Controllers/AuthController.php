@@ -22,12 +22,12 @@ class AuthController extends Controller
             'birthplace' => 'required|max:191', 
             'dateofbirth' => 'required|date_format:Y-m-d', 
             'address' => 'required',
-
+            'website' => 'max:191',
         ]);
         if ($validator->fails()){
             return response()->json([
                 'success' => false,
-                'messages' => 'Register Fail !',
+                'messages' => 'Please fill in the blank !',
                 'data' => $validator->errors(),
             ], 400);
         }
@@ -60,7 +60,7 @@ class AuthController extends Controller
         else {
             return response()->json([
                 'success' => false,
-                'messages' => 'Register Fail !',
+                'messages' => 'Can\'t Register !',
                 'data'=>NULL,
             ], 400);
         }
@@ -73,7 +73,7 @@ class AuthController extends Controller
         if ($validator->fails()){
             return response()->json([
                 'success' => false,
-                'messages' => 'Login Fail !',
+                'messages' => 'Please fill in the blank !',
                 'data' => $validator->errors(),
             ], 400);
         }
@@ -88,12 +88,12 @@ class AuthController extends Controller
                 $user->update([
                     'api_token' => $apiToken
                 ]);
-
                 return response()->json([
                     'success' => true,
                     'messages' => 'Login Success !',
                     'data' => [
                         'user' => $user,
+                        'permissions' => User::find($user->id)->getPermissionsViaRoles(),
                         'api_token' => $apiToken
                     ]
                 ], 200);
@@ -109,7 +109,7 @@ class AuthController extends Controller
         else {
             return response()->json([
                 'success' => false,
-                'messages' => 'Login Fail !',
+                'messages' => 'Wrong Email Or Password !',
                 'data'=>NULL,
             ], 400);
         }
@@ -256,7 +256,7 @@ class AuthController extends Controller
                 'success' => false,
                 'messages' => 'Reset Password Success !',
                 'data'=>NULL,
-            ], 400);
+            ], 200);
         }
     }
 }

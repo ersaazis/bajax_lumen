@@ -59,7 +59,7 @@ class RoleController extends Controller
         if ($validator->fails()){
             return response()->json([
                 'success' => false,
-                'messages' => 'Add Role Fail !',
+                'messages' => 'Please fill in the blank !',
                 'data' => $validator->errors(),
             ], 400);
         }
@@ -147,7 +147,7 @@ class RoleController extends Controller
         if ($validator->fails() || !$role){
             return response()->json([
                 'success' => false,
-                'messages' => 'Update Role Fail !',
+                'messages' => empty($validator->fails())?'Role Not Found !':'Please fill in the blank !',
                 'data' => empty($validator->fails())?NULL:$validator->errors(),
             ], 400);
         }
@@ -166,7 +166,7 @@ class RoleController extends Controller
         else {
             return response()->json([
                 'success' => false,
-                'messages' => 'Update Role Fail !',
+                'messages' => 'Can\'t Update Role !',
                 'data'=>NULL,
             ], 400);
         }
@@ -186,12 +186,12 @@ class RoleController extends Controller
                 'success' => true,
                 'messages' => 'Delete Role Success !',
                 'data'=>NULL,
-            ], 400);
+            ], 200);
         }
         else
             return response()->json([
                 'success' => false,
-                'messages' => 'Delete Role Fail !',
+                'messages' => 'Can\'t Delete Role !',
                 'data'=>NULL,
             ], 400);
     }

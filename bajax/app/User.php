@@ -21,7 +21,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      */
     protected $guard_name = 'api';
     protected $fillable = [
-        'email', 'password', 'name', 'birthplace', 'dateofbirth', 'aboutme', 'address', 'website', 'api_token', 'email_code', 'forgot_password'
+        'email', 'password', 'name', 'birthplace', 'dateofbirth', 'aboutme', 'address', 'website', 'api_token', 'email_code', 'forgot_password', 'point'
     ];
 
     /**

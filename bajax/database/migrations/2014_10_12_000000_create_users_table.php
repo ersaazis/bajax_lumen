@@ -25,6 +25,9 @@ class CreateUsersTable extends Migration
             $table->text('address');
             $table->string('website')->nullable();
 
+            $table->string('point')->nullable();
+            $table->timestamp('last_submit_flag')->nullable();
+
             $table->string('api_token')->nullable();
             $table->string('email_code')->nullable();
             $table->string('forgot_password')->nullable();
