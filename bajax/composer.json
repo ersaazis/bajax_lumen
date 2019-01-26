@@ -9,7 +9,8 @@
         "laravel/lumen-framework": "5.5.*",
         "vlucas/phpdotenv": "~2.2",
         "illuminate/mail": "v5.5.*",
-        "spatie/laravel-permission": "^2.29"
+        "spatie/laravel-permission": "^2.29",
+        "illuminate/routing": "v5.5.*"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

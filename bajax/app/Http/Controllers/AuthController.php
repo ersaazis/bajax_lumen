@@ -13,6 +13,7 @@ class AuthController extends Controller
 {
     public function __construct(){
         $this->middleware('auth', ['only' => ['logout']]);
+        $this->middleware('throttle:5,1');
     }
     public function register(Request $request){
         $validator = Validator::make($request->all(), [
