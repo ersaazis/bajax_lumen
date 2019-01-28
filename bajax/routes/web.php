@@ -20,10 +20,14 @@ $router->post('/login',[
 	'uses'=>'AuthController@login'
 ]);
 
-
 $router->get('/token/{token}',[
 	'middleware'=>'throttle:70,2',
 	'uses'=>'AuthController@token'
+]);
+
+$router->get('/scoreboard',[
+	'middleware'=>'auth',
+	'uses'=>'ScoreBoardController@index'
 ]);
 
 $router->group(['middleware' => 'throttle:5,5'], function () use ($router) {
@@ -63,5 +67,10 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
 		$router->patch('update/{id}','ChallengeController@update');
 		$router->delete('destroy/{id}','ChallengeController@destroy');
 		$router->delete('destroyFile/{id}/{file}','ChallengeController@destroyFile');
+
+		$router->post('check/{id}',[
+			'middleware'=>'throttle:5,2',
+			'uses'=>'ChallengeLogController@cekFlag'
+		]);
 	});
 });

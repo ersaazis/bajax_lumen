@@ -8,6 +8,7 @@ use App\User;
 use App\Challenge;
 use App\ChallengeLog;
 use Auth;
+use Carbon\Carbon;
 
 class ChallengeLogController extends Controller
 {
@@ -21,8 +22,7 @@ class ChallengeLogController extends Controller
 	    			'challenge_id' => $id,
 	    		]);
                 $point=Auth::user()->point+$challenge->point;
-                User::find(Auth::id())->update('point' => $point);
-	    		User::find(Auth::id())->update('last_submit_flag' => $succsessChal->created_at);
+	    		User::find(Auth::id())->update(['last_submit_flag' => Carbon::now()->toDateTimeString(), 'point' => $point]);
                 return response()->json([
                     'success' => true,
                     'messages' => 'Success, +'.$challenge->point.' Point, Your Point '.$point,

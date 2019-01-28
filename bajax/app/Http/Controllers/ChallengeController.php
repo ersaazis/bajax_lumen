@@ -14,8 +14,8 @@ class ChallengeController extends Controller
 {
     function __construct()
     {
-         $this->middleware('permission:challenge-create', ['only' => ['create','store']]);
-         $this->middleware('permission:challenge-edit', ['only' => ['destroyFile','edit','update']]);
+         $this->middleware('permission:challenge-create', ['only' => ['store']]);
+         $this->middleware('permission:challenge-edit', ['only' => ['destroyFile','update']]);
          $this->middleware('permission:challenge-delete', ['only' => ['destroy']]);
     }
 
@@ -29,6 +29,9 @@ class ChallengeController extends Controller
         $listChallenges = Challenge::orderBy('id','ASC')->get();
         $challenges=array();
         foreach ($listChallenges as $challenge) {
+            if(!Auth::user()->can('challenge-edit'))
+                $challenge['flag']="SECRET";
+
             $challenge['file1']=($challenge['file1']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file1']:NULL;
             $challenge['file2']=($challenge['file2']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file2']:NULL;
             $challenge['file3']=($challenge['file3']!=NULL)?env('CHALLENGE_URL').$challenge['id'].'/'.$challenge['file3']:NULL;
@@ -198,7 +201,7 @@ class ChallengeController extends Controller
             return response()->json([
                 'success' => true,
                 'messages' => 'Update Challenge Success !',
-                'data' => $idChallenge
+                'data' => NULL
             ], 201);
         }
         else {
